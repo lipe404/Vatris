@@ -19,6 +19,7 @@ let level = 1;
 const levelElement = document.getElementById('level');
 
 // Constantes
+const particles = [];
 const COLS = 10;
 const ROWS = 20;
 const BLOCK_SIZE = 30;
@@ -141,6 +142,66 @@ function drawGlitchText(text, x, y, fillStyle, shadowBlur = 20) {
     context.fillText(text, x - 2, y + 1);
 }
 
+// Partículas de distorção
+// Partículas de distorção mais estilizadas
+function createGlitchParticles(x, y) {
+  const numParticles = 30;  // Aumentar o número de partículas para mais intensidade visual
+  for (let i = 0; i < numParticles; i++) {
+    const angle = Math.random() * Math.PI * 2; // Adicionando uma direção aleatória para cada partícula
+    const speed = Math.random() * 2 + 1; // Variedade de velocidades para dar mais imprevisibilidade
+    const size = Math.random() * 3 + 2; // Variar o tamanho para dar mais dinamicidade
+
+    particles.push({
+      x: x * BLOCK_SIZE + Math.cos(angle) * Math.random() * BLOCK_SIZE,
+      y: y * BLOCK_SIZE + Math.sin(angle) * Math.random() * BLOCK_SIZE,
+      size: size,
+      speedX: Math.cos(angle) * speed,
+      speedY: Math.sin(angle) * speed,
+      life: Math.random() * 40 + 20, // Tempo de vida mais variado
+      color: `hsl(${Math.random() * 360}, 100%, ${Math.random() * 50 + 30}%)`, // Cores mais suaves para um efeito mais estético
+      alpha: 1,
+      glow: Math.random() * 2 + 0.5  // Adicionando um efeito de brilho
+    });
+  }
+}
+
+// Atualizar e desenhar as partículas com novos efeitos
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const particle = particles[i];
+    particle.x += particle.speedX;
+    particle.y += particle.speedY;
+    particle.size *= 0.97;  // Diminuição mais suave para um efeito gradual de encolhimento
+    particle.alpha -= 0.03;  // Efeito de desvanecimento mais suave
+    particle.glow -= 0.05; // O brilho das partículas vai diminuindo com o tempo
+
+    if (particle.alpha <= 0 || particle.size <= 0 || particle.glow <= 0) {
+      particles.splice(i, 1);  // Remove as partículas que morreram
+    }
+  }
+}
+
+// Desenhar as partículas com um efeito de brilho dinâmico
+function drawParticles() {
+  particles.forEach(particle => {
+    context.beginPath();
+    context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+
+    // Efeito de brilho nas partículas
+    context.shadowBlur = 15; // Brilho suave
+    context.shadowColor = particle.color; // Cor do brilho da partícula
+    context.fillStyle = particle.color;
+
+    // Desenha a partícula com transparência variável
+    context.globalAlpha = particle.alpha;
+
+    context.fill();
+  });
+  context.globalAlpha = 1; // Resetando o alpha após desenhar as partículas
+  context.shadowBlur = 0; // Resetando o brilho
+  context.shadowColor = 'transparent'; // Resetando a cor do brilho
+}
+
 // Arena
 function createMatrix(w, h) {
   const matrix = [];
@@ -241,11 +302,14 @@ function arenaSweep() {
     for (let x = 0; x < arena[y].length; x++) {
       if (arena[y][x] === 0) continue outer;
     }
+
+    // Gerar partículas de glitch na linha que foi apagada
+    createGlitchParticles(0, y);
+
     setTimeout(() => {
-      const row = arena.splice(y, 1)[0].fill(0);
-      arena.unshift(row);
-      y++;
-      lineClearSound.play();
+        const row = arena.splice(y, 1)[0].fill(0);
+        arena.unshift(row);
+        lineClearSound.play();
     }, 100);
 
     player.score += rowCount * 100;
@@ -314,6 +378,8 @@ function update(time = 0) {
     }
 
     draw();
+    updateParticles();
+    drawParticles();
     updateScore();
 
     if (player.score < 0 || collide(arena, player)) {
