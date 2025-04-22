@@ -14,6 +14,10 @@ let lastBlink = 0;
 let pauseAnimationAlpha = 0;
 let pauseDirection = 1;
 
+// Variável de nível
+let level = 1;
+const levelElement = document.getElementById('level'); // Pegue o elemento do nível no HTML
+
 // Constantes
 const COLS = 10;
 const ROWS = 20;
@@ -276,9 +280,21 @@ function draw() {
     }
 }
 
-// Atualizar a pontuação
+// Atualizar a pontuação e o nível
 function updateScore() {
-  document.getElementById('score').innerText = `SCORE: ${String(player.score).padStart(6, '0')}`;
+    document.getElementById('score').innerText = `SCORE: ${String(player.score).padStart(6, '0')}`;
+
+    // Incrementar nível a cada 1000 pontos
+    if (player.score >= level * 1000) {
+      level++;
+      dropInterval = Math.max(100, dropInterval - 100);  // Diminui a velocidade (aumenta a dificuldade)
+      updateLevel();  // Atualiza o nível na tela
+    }
+}
+
+// Função para atualizar o nível na interface HTML
+function updateLevel() {
+    levelElement.innerText = `LEVEL: ${level}`;
 }
 
 // Atualizar a tela
