@@ -10,13 +10,13 @@ let startScreenFrame = 0;
 let showPressEnter = true;
 let lastBlink = 0;
 
-//Variáveis para animação do pause
+// Variáveis para animação do pause
 let pauseAnimationAlpha = 0;
 let pauseDirection = 1;
 
 // Variável de nível
 let level = 1;
-const levelElement = document.getElementById('level'); // Pegue o elemento do nível no HTML
+const levelElement = document.getElementById('level');
 
 // Constantes
 const COLS = 10;
@@ -46,7 +46,6 @@ introImage.src = 'imgs/intro.jpg';
 
 const gameImage = new Image();
 gameImage.src = 'imgs/fundo.jpg';
-
 
 // Tetrominos
 const TETROMINOS = {
@@ -107,7 +106,7 @@ function drawStartScreen() {
     gradient.addColorStop(0, '#ff00cc');
     gradient.addColorStop(1, '#00ffff');
 
-    const dropY = Math.min(centerY - 50, -100 + startScreenFrame * 4); // "queda"
+    const dropY = Math.min(centerY - 50, -100 + startScreenFrame * 4);
     startScreenFrame += 1;
 
     context.textAlign = 'center';
@@ -116,7 +115,6 @@ function drawStartScreen() {
 
     drawGlitchText(title, centerX, dropY, gradient);
 
-    // Efeito de piscar no "Aperte Enter"
     const now = performance.now();
     if (now - lastBlink > 500) {
         showPressEnter = !showPressEnter;
@@ -129,21 +127,17 @@ function drawStartScreen() {
     }
 }
 
-// Efeito glitch: múltiplas camadas ligeiramente deslocadas
 function drawGlitchText(text, x, y, fillStyle, shadowBlur = 20) {
     context.fillStyle = fillStyle;
     context.shadowColor = '#ff00cc';
     context.shadowBlur = shadowBlur;
-
-    // Camada principal
     context.fillText(text, x, y);
 
-    // Camadas RGB deslocadas (efeito glitch leve)
     context.shadowBlur = 0;
-    context.fillStyle = 'rgba(255, 0, 255, 0.4)'; // magenta
+    context.fillStyle = 'rgba(255, 0, 255, 0.4)';
     context.fillText(text, x + 2, y - 1);
 
-    context.fillStyle = 'rgba(0, 255, 255, 0.4)'; // ciano
+    context.fillStyle = 'rgba(0, 255, 255, 0.4)';
     context.fillText(text, x - 2, y + 1);
 }
 
@@ -217,7 +211,6 @@ function playerDrop() {
   dropCounter = 0;
 }
 
-// Funções de movimento do jogador
 function playerMove(dir) {
   player.pos.x += dir;
   if (collide(arena, player)) player.pos.x -= dir;
@@ -248,7 +241,6 @@ function arenaSweep() {
     for (let x = 0; x < arena[y].length; x++) {
       if (arena[y][x] === 0) continue outer;
     }
-    // Animação para linhas eliminadas
     setTimeout(() => {
       const row = arena.splice(y, 1)[0].fill(0);
       arena.unshift(row);
@@ -276,7 +268,7 @@ function draw() {
     drawMatrix(player.matrix, player.pos);
 
     if (isPaused) {
-    drawPauseScreen();
+        drawPauseScreen();
     }
 }
 
@@ -284,11 +276,10 @@ function draw() {
 function updateScore() {
     document.getElementById('score').innerText = `SCORE: ${String(player.score).padStart(6, '0')}`;
 
-    // Incrementar nível a cada 1000 pontos
     if (player.score >= level * 1000) {
       level++;
-      dropInterval = Math.max(100, dropInterval - 100);  // Diminui a velocidade (aumenta a dificuldade)
-      updateLevel();  // Atualiza o nível na tela
+      dropInterval = Math.max(100, dropInterval - 100);
+      updateLevel();
     }
 }
 
@@ -324,21 +315,23 @@ function update(time = 0) {
 
     draw();
     updateScore();
-    requestAnimationFrame(update);
+
+    if (player.score < 0 || collide(arena, player)) {
+        gameOver();
+    } else {
+        requestAnimationFrame(update);
+    }
 }
 
 // Função para desenhar a tela de pause
 function drawPauseScreen() {
-    // Fundo translúcido
     context.fillStyle = 'rgba(0, 0, 0, 0.6)';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Criar gradiente no texto
     const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
-    gradient.addColorStop(0, '#ff00cc'); // rosa neon
-    gradient.addColorStop(1, '#3333ff'); // azul neon
+    gradient.addColorStop(0, '#ff00cc');
+    gradient.addColorStop(1, '#3333ff');
 
-    // Desenhar linhas decorativas estilo vaporwave
     context.strokeStyle = '#ff00cc';
     context.lineWidth = 2;
     context.beginPath();
@@ -352,7 +345,6 @@ function drawPauseScreen() {
     context.lineTo(canvas.width - 40, canvas.height / 2 + 70);
     context.stroke();
 
-    // Configurar estilo do texto
     context.fillStyle = gradient;
     context.font = 'bold 48px "Courier New", monospace';
     context.textAlign = 'center';
@@ -360,16 +352,13 @@ function drawPauseScreen() {
     context.shadowColor = '#ff00cc';
     context.shadowBlur = 15;
 
-    // Texto principal
     context.fillText('⏸ PAUSADO', canvas.width / 2, canvas.height / 2);
 
-    // Texto complementar em estilo glitch
     context.shadowColor = '#00ffff';
     context.shadowBlur = 10;
     context.font = '16px monospace';
     context.fillText('Pressione P para continuar', canvas.width / 2, canvas.height / 2 + 50);
 
-    // Resetar sombra
     context.shadowBlur = 0;
 }
 
@@ -385,41 +374,131 @@ function resetPlayer() {
   player.pos.y = 0;
   player.pos.x = Math.floor(COLS / 2) - Math.floor(player.matrix[0].length / 2);
   if (collide(arena, player)) {
-    arena.forEach(row => row.fill(0));
-    player.score = 0;
     gameOverSound.play();
+    saveHighScore();
+    gameStarted = false;
   }
 }
 
 // Inicializar o jogo
-const arena = createMatrix(COLS, ROWS);
-const player = {
+let arena = createMatrix(COLS, ROWS);
+let player = {
   pos: { x: 0, y: 0 },
   matrix: null,
   score: 0
 };
 
-// Adicionar eventos de teclado
-document.addEventListener('keydown', event => {
-    if (!gameStarted && event.key === 'Enter') {
-      gameStarted = true;
-      resetPlayer();
-      update(); // Inicia a animação do jogo
-    } else if (gameStarted) {
-      if (event.key === 'ArrowLeft') playerMove(-1);
-      else if (event.key === 'ArrowRight') playerMove(1);
-      else if (event.key === 'ArrowDown') playerDrop();
-      else if (event.key === 'ArrowUp') playerRotate(1);
-      else if (event.key === 'p' || event.key === 'P') isPaused = !isPaused;
-      else if (event.key === 'r' || event.key === 'R') resetPlayer();
+//Função para desenhar a tela de Game Over
+function drawGameOverScreen() {
+    context.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
+    gradient.addColorStop(0, '#ff00cc');
+    gradient.addColorStop(1, '#3333ff');
+
+    context.strokeStyle = '#ff00cc';
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(40, canvas.height / 2 - 70);
+    context.lineTo(canvas.width - 40, canvas.height / 2 - 70);
+    context.stroke();
+
+    context.strokeStyle = '#3333ff';
+    context.beginPath();
+    context.moveTo(40, canvas.height / 2 + 70);
+    context.lineTo(canvas.width - 40, canvas.height / 2 + 70);
+    context.stroke();
+
+    context.fillStyle = gradient;
+    context.font = 'bold 48px "Courier New", monospace';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.shadowColor = '#ff00cc';
+    context.shadowBlur = 15;
+
+    context.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 40);
+
+    const currentScoreText = `Sua Pontuação: ${player.score}`;
+    const highScoreText = `Pontuação Mais Alta: ${highScore}`;
+
+    context.shadowColor = '#00ffff';
+    context.shadowBlur = 10;
+    context.font = 'bold 24px "Courier New", monospace';
+    context.fillText(currentScoreText, canvas.width / 2, canvas.height / 2 + 30);
+    context.fillText(highScoreText, canvas.width / 2, canvas.height / 2 + 70);
+
+    context.shadowBlur = 0;
+    context.fillStyle = '#ffffff';
+    context.font = '16px "Courier New", monospace';
+    context.fillText("Aperte 'Enter' para reiniciar", canvas.width / 2, canvas.height / 2 + 120);
+}
+
+function startGame() {
+    gameStarted = true;
+    player.score = 0;
+    arena.forEach(row => row.fill(0));
+    resetPlayer();
+    update();
+}
+
+function restartGame() {
+    player.score = 0;
+    arena.forEach(row => row.fill(0));
+    resetPlayer();
+    update();
+}
+
+function gameOver() {
+    gameOverSound.play();
+    saveHighScore();
+    drawGameOverScreen();
+    gameStarted = false;
+}
+
+function saveHighScore() {
+    const currentScore = player.score;
+    let highScore = localStorage.getItem('highScore') || 0;
+
+    if (currentScore > highScore) {
+        highScore = currentScore;
+        localStorage.setItem('highScore', highScore);
     }
-});
+}
 
 // Sistema de Highscore com LocalStorage
 let highScore = localStorage.getItem('vatrisHighScore') || 0;
 if (player.score > highScore) {
   localStorage.setItem('vatrisHighScore', player.score);
 }
+
+// Adicionar evento de teclado para alternar pausa
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'p' || event.key === 'P') {
+      isPaused = !isPaused;
+      if (!isPaused) {
+          // Se o jogo foi despausado, continue com o fluxo normal
+          lastTime = performance.now();
+          requestAnimationFrame(update);
+      }
+  }
+});
+
+// Adicionar eventos de teclado
+document.addEventListener('keydown', event => {
+    if (!gameStarted && event.key === 'Enter') {
+        startGame();
+    }
+    else if (gameStarted && !isPaused) {
+        if (event.key === 'ArrowLeft') playerMove(-1);
+        else if (event.key === 'ArrowRight') playerMove(1);
+        else if (event.key === 'ArrowDown') playerDrop();
+        else if (event.key === 'ArrowUp') playerRotate(1);
+    }
+    else if (!gameStarted && event.key === 'Enter') {
+        restartGame();
+    }
+});
 
 // Iniciar o jogo
 resetPlayer();
