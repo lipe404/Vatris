@@ -5,7 +5,7 @@ const context = canvas.getContext('2d');
 canvas.width = 300;
 canvas.height = 600;
 
-// Constants
+// Constantes
 const COLS = 10;
 const ROWS = 20;
 const BLOCK_SIZE = 30;
@@ -20,13 +20,14 @@ const COLORS = [
   '#f00'  // O
 ];
 
-// Load sounds
+// Carregar sons
 const moveSound = new Audio('sounds/move.wav');
 const rotateSound = new Audio('sounds/rotate.wav');
 const lockSound = new Audio('sounds/lock.wav');
 const gameOverSound = new Audio('sounds/gameover.mp3');
+const lineClearSound = new Audio('sounds/lineClear.wav');
 
-// Tetromino shapes
+// Tetrominos
 const TETROMINOS = {
   'I': [
     [0, 0, 0, 0],
@@ -72,6 +73,7 @@ function createMatrix(w, h) {
   return matrix;
 }
 
+// Desenhar a matriz
 function drawMatrix(matrix, offset) {
   matrix.forEach((row, y) => {
     row.forEach((value, x) => {
@@ -85,6 +87,7 @@ function drawMatrix(matrix, offset) {
   });
 }
 
+// Mesclar a matriz do jogador com a arena
 function merge(arena, player) {
   player.matrix.forEach((row, y) => {
     row.forEach((value, x) => {
@@ -93,6 +96,7 @@ function merge(arena, player) {
   });
 }
 
+// Colisão
 function collide(arena, player) {
   const [m, o] = [player.matrix, player.pos];
   for (let y = 0; y < m.length; y++) {
@@ -105,6 +109,7 @@ function collide(arena, player) {
   return false;
 }
 
+// Rotacionar a matriz
 function rotate(matrix, dir) {
   for (let y = 0; y < matrix.length; ++y) {
     for (let x = 0; x < y; ++x) {
@@ -118,6 +123,7 @@ function rotate(matrix, dir) {
   }
 }
 
+// Funções de movimento do jogador
 function playerDrop() {
   player.pos.y++;
   if (collide(arena, player)) {
@@ -130,12 +136,14 @@ function playerDrop() {
   dropCounter = 0;
 }
 
+// Funções de movimento do jogador
 function playerMove(dir) {
   player.pos.x += dir;
   if (collide(arena, player)) player.pos.x -= dir;
   else moveSound.play();
 }
 
+// Rotacionar o jogador
 function playerRotate(dir) {
   const pos = player.pos.x;
   let offset = 1;
@@ -152,20 +160,27 @@ function playerRotate(dir) {
   rotateSound.play();
 }
 
+// Limpar linhas completas
 function arenaSweep() {
   let rowCount = 1;
   outer: for (let y = arena.length - 1; y >= 0; y--) {
     for (let x = 0; x < arena[y].length; x++) {
       if (arena[y][x] === 0) continue outer;
     }
-    const row = arena.splice(y, 1)[0].fill(0);
-    arena.unshift(row);
-    y++;
+    // Animação para linhas eliminadas
+    setTimeout(() => {
+      const row = arena.splice(y, 1)[0].fill(0);
+      arena.unshift(row);
+      y++;
+      lineClearSound.play();
+    }, 100);
+    
     player.score += rowCount * 100;
     rowCount *= 2;
   }
 }
 
+// Desenhar a tela
 function draw() {
   context.fillStyle = '#000';
   context.fillRect(0, 0, canvas.width, canvas.height);
@@ -173,15 +188,21 @@ function draw() {
   drawMatrix(player.matrix, player.pos);
 }
 
+// Atualizar a pontuação
 function updateScore() {
   document.getElementById('score').innerText = `SCORE: ${String(player.score).padStart(6, '0')}`;
 }
 
+// Atualizar a tela
 let dropCounter = 0;
 let dropInterval = 1000;
 let lastTime = 0;
+let isPaused = false;
 
+// Função de atualização
 function update(time = 0) {
+  if (isPaused) return;
+  
   const deltaTime = time - lastTime;
   lastTime = time;
   dropCounter += deltaTime;
@@ -191,10 +212,12 @@ function update(time = 0) {
   requestAnimationFrame(update);
 }
 
+// Criar a matriz do tetromino
 function createPiece(type) {
   return TETROMINOS[type];
 }
 
+// Resetar o jogador
 function resetPlayer() {
   const pieces = 'TJLOSZI';
   player.matrix = createPiece(pieces[Math.floor(Math.random() * pieces.length)]);
@@ -207,6 +230,7 @@ function resetPlayer() {
   }
 }
 
+// Inicializar o jogo
 const arena = createMatrix(COLS, ROWS);
 const player = {
   pos: { x: 0, y: 0 },
@@ -214,12 +238,16 @@ const player = {
   score: 0
 };
 
+// Adicionar eventos de teclado
 document.addEventListener('keydown', event => {
   if (event.key === 'ArrowLeft') playerMove(-1);
   else if (event.key === 'ArrowRight') playerMove(1);
   else if (event.key === 'ArrowDown') playerDrop();
   else if (event.key === 'ArrowUp') playerRotate(1);
+  else if (event.key === 'p' || event.key === 'P') isPaused = !isPaused; // Pausar o jogo
+  else if (event.key === 'r' || event.key === 'R') resetPlayer(); // Reiniciar o jogo
 });
 
+// Iniciar o jogo
 resetPlayer();
 update();
