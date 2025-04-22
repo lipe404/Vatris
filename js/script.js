@@ -4,6 +4,11 @@ const canvas = document.getElementById('gameCanvas');
 const context = canvas.getContext('2d');
 canvas.width = 300;
 canvas.height = 600;
+let hue = 0;
+
+//Variáveis para animação do pause
+let pauseAnimationAlpha = 0;
+let pauseDirection = 1;
 
 // Constantes
 const COLS = 10;
@@ -174,7 +179,7 @@ function arenaSweep() {
       y++;
       lineClearSound.play();
     }, 100);
-    
+
     player.score += rowCount * 100;
     rowCount *= 2;
   }
@@ -182,10 +187,16 @@ function arenaSweep() {
 
 // Desenhar a tela
 function draw() {
-  context.fillStyle = '#000';
+  context.fillStyle = `hsl(${hue}, 100%, 10%)`;
   context.fillRect(0, 0, canvas.width, canvas.height);
+  hue = (hue + 0.5) % 360;
+
   drawMatrix(arena, { x: 0, y: 0 });
   drawMatrix(player.matrix, player.pos);
+
+  if (isPaused) {
+    drawPauseScreen();
+  }
 }
 
 // Atualizar a pontuação
@@ -201,15 +212,66 @@ let isPaused = false;
 
 // Função de atualização
 function update(time = 0) {
-  if (isPaused) return;
-  
-  const deltaTime = time - lastTime;
-  lastTime = time;
-  dropCounter += deltaTime;
-  if (dropCounter > dropInterval) playerDrop();
-  draw();
-  updateScore();
-  requestAnimationFrame(update);
+    const deltaTime = time - lastTime;
+    lastTime = time;
+
+    if (!isPaused) {
+      dropCounter += deltaTime;
+      if (dropCounter > dropInterval) {
+        playerDrop();
+        dropCounter = 0;
+      }
+    }
+
+    draw();
+    updateScore();
+    requestAnimationFrame(update);
+}
+
+// Função para desenhar a tela de pause
+function drawPauseScreen() {
+    // Fundo translúcido
+    context.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Criar gradiente no texto
+    const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
+    gradient.addColorStop(0, '#ff00cc'); // rosa neon
+    gradient.addColorStop(1, '#3333ff'); // azul neon
+
+    // Desenhar linhas decorativas estilo vaporwave
+    context.strokeStyle = '#ff00cc';
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(40, canvas.height / 2 - 70);
+    context.lineTo(canvas.width - 40, canvas.height / 2 - 70);
+    context.stroke();
+
+    context.strokeStyle = '#3333ff';
+    context.beginPath();
+    context.moveTo(40, canvas.height / 2 + 70);
+    context.lineTo(canvas.width - 40, canvas.height / 2 + 70);
+    context.stroke();
+
+    // Configurar estilo do texto
+    context.fillStyle = gradient;
+    context.font = 'bold 48px "Courier New", monospace';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.shadowColor = '#ff00cc';
+    context.shadowBlur = 15;
+
+    // Texto principal
+    context.fillText('⏸ PAUSADO', canvas.width / 2, canvas.height / 2);
+
+    // Texto complementar em estilo glitch
+    context.shadowColor = '#00ffff';
+    context.shadowBlur = 10;
+    context.font = '16px monospace';
+    context.fillText('Pressione P para continuar', canvas.width / 2, canvas.height / 2 + 50);
+
+    // Resetar sombra
+    context.shadowBlur = 0;
 }
 
 // Criar a matriz do tetromino
@@ -247,6 +309,12 @@ document.addEventListener('keydown', event => {
   else if (event.key === 'p' || event.key === 'P') isPaused = !isPaused; // Pausar o jogo
   else if (event.key === 'r' || event.key === 'R') resetPlayer(); // Reiniciar o jogo
 });
+
+// Sistema de Highscore com LocalStorage
+let highScore = localStorage.getItem('vatrisHighScore') || 0;
+if (player.score > highScore) {
+  localStorage.setItem('vatrisHighScore', player.score);
+}
 
 // Iniciar o jogo
 resetPlayer();
