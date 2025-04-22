@@ -36,6 +36,14 @@ const lockSound = new Audio('sounds/lock.wav');
 const gameOverSound = new Audio('sounds/gameover.mp3');
 const lineClearSound = new Audio('sounds/lineClear.wav');
 
+// Carregar imagens
+const introImage = new Image();
+introImage.src = 'imgs/intro.jpg';
+
+const gameImage = new Image();
+gameImage.src = 'imgs/fundo.jpg';
+
+
 // Tetrominos
 const TETROMINOS = {
   'I': [
@@ -77,9 +85,13 @@ const TETROMINOS = {
 
 // Desenhar a tela de inicio
 function drawStartScreen() {
-    context.fillStyle = `hsl(${hue}, 100%, 10%)`;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    hue = (hue + 0.5) % 360;
+    if (introImage.complete) {
+        context.drawImage(introImage, 0, 0, canvas.width, canvas.height);
+    } else {
+        introImage.onload = () => {
+            context.drawImage(introImage, 0, 0, canvas.width, canvas.height);
+        };
+    }
 
     const title = "VATЯIS";
     const prompt = "Aperte 'Enter'";
@@ -96,7 +108,7 @@ function drawStartScreen() {
 
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.font = 'bold 48px "Courier New", monospace';
+    context.font = 'bold 50px "Courier New", monospace';
 
     drawGlitchText(title, centerX, dropY, gradient);
 
@@ -247,16 +259,21 @@ function arenaSweep() {
 
 // Desenhar a tela
 function draw() {
-  context.fillStyle = `hsl(${hue}, 100%, 10%)`;
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  hue = (hue + 0.5) % 360;
+    if (gameImage.complete) {
+        context.drawImage(gameImage, 0, 0, canvas.width, canvas.height);
+    } else {
+        gameImage.onload = () => {
+            context.drawImage(gameImage, 0, 0, canvas.width, canvas.height);
+        };
+    }
+    hue = (hue + 0.5) % 360;
 
-  drawMatrix(arena, { x: 0, y: 0 });
-  drawMatrix(player.matrix, player.pos);
+    drawMatrix(arena, { x: 0, y: 0 });
+    drawMatrix(player.matrix, player.pos);
 
-  if (isPaused) {
+    if (isPaused) {
     drawPauseScreen();
-  }
+    }
 }
 
 // Atualizar a pontuação

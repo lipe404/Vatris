@@ -1,7 +1,7 @@
 /* style.css - VATЯIS Vaporwave Style */
 
 /* Fonte retrô pixelada */
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
 
 /* ===============================
    ESTILO GERAL DO BODY
@@ -9,9 +9,13 @@
 body {
   margin: 0;
   padding: 0;
-  background: radial-gradient(circle at center, #ff00ff, #111); /* Fundo com efeito néon degradê */
+  background: radial-gradient(
+    circle at center,
+    #ff00ff,
+    #111
+  ); /* Fundo com efeito néon degradê */
   overflow: hidden;
-  font-family: 'Press Start 2P', monospace;
+  font-family: "Press Start 2P", monospace;
   color: #fff;
   position: relative;
 }
@@ -22,7 +26,11 @@ body {
 #gameCanvas {
   display: block;
   margin: 0 auto;
-  background: radial-gradient(circle at center, rgba(255, 0, 255, 0.1), rgba(0, 0, 0, 1)); /* fundo translúcido com centro rosa */
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 0, 255, 0.1),
+    rgba(0, 0, 0, 1)
+  ); /* fundo translúcido com centro rosa */
   box-shadow: 0 0 30px #f0f; /* brilho néon rosa */
   border: 1px solid #0ff; /* borda azul neon */
   image-rendering: pixelated; /* mantém a estética pixelada */
@@ -43,36 +51,69 @@ body {
   top: 20px;
   left: 20px;
   z-index: 10;
-  text-shadow: 2px 2px #000; /* sombra para contraste com fundo */
   pointer-events: none; /* evita clique acidental */
+  font-family: "Press Start 2P", monospace; /* fonte pixelizada */
+  color: #fff;
 }
 
+/* Logo com animação glitchada e efeito neon */
 #logo {
-  font-size: 24px;
+  font-size: 30px;
   color: #ff66cc;
-  text-shadow:
-    0 0 8px #ff00ff,
-    0 0 20px #ff00ff;
+  text-shadow: 0 0 8px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff66cc,
+    0 0 40px #ff66cc;
   margin-bottom: 20px;
-  letter-spacing: 1px;
-  animation: neonGlow 1.5s infinite alternate; /* animação neon no logo */
+  letter-spacing: 2px;
+  animation: neonGlow 1.5s infinite alternate, glitch 2s infinite; /* animação neon + glitch */
 }
 
-/* Estilo dos elementos HUD de pontuação */
+/* Estilo dos elementos HUD de pontuação, nível e linhas */
 #score,
 #level,
 #lines {
-  margin: 10px 0;
-  font-size: 12px;
+  font-size: 18px;
+  margin: 15px 0;
   color: #00ffff;
-  text-shadow: 0 0 5px #00ffff;
-  animation: neonGlow 1s infinite alternate; /* animação neon nos valores */
+  text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 15px #ff00ff;
+  animation: neonGlow 1s infinite alternate, glitch 2s infinite;
 }
 
-/* Animação de brilho neon (aplica no logo e HUD) */
+/* Animação de brilho neon */
 @keyframes neonGlow {
-  0% { text-shadow: 0 0 8px #ff00ff, 0 0 20px #ff00ff, 0 0 40px #ff66cc; }
-  100% { text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 80px #ff00ff; }
+  0% {
+    text-shadow: 0 0 8px #ff00ff, 0 0 20px #ff00ff, 0 0 40px #ff66cc;
+  }
+  100% {
+    text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 80px #ff00ff;
+  }
+}
+
+/* Animação de glitch */
+@keyframes glitch {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  20% {
+    transform: translateX(-5px);
+    opacity: 0.8;
+  }
+  40% {
+    transform: translateX(5px);
+    opacity: 0.6;
+  }
+  60% {
+    transform: translateX(-3px);
+    opacity: 0.4;
+  }
+  80% {
+    transform: translateX(3px);
+    opacity: 0.2;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* Transição suave para o HUD */
@@ -80,14 +121,41 @@ body {
   transition: all 0.3s ease;
 }
 
+/* Efeito de background de fundo para a HUD */
+#hud {
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(255, 0, 255, 0.6),
+    0 0 30px rgba(255, 102, 204, 0.8);
+}
+
+/* Efeito de borda neon */
+#hud {
+  border: 2px solid #ff66cc;
+  animation: borderGlow 1.5s infinite alternate;
+}
+
+@keyframes borderGlow {
+  0% {
+    border-color: #ff66cc;
+  }
+  100% {
+    border-color: #00ffff;
+  }
+}
+
 /* ===============================
    FUNDO COM EFEITO DE ESTRELAS
    =============================== */
 body::before {
-  content: '';
+  content: "";
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-image: url('images/stars-pixelated.png');
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("images/stars-pixelated.png");
   background-size: cover;
   background-repeat: repeat;
   opacity: 0.2;
@@ -97,8 +165,12 @@ body::before {
 
 /* Animação sutil das estrelas */
 @keyframes moveStars {
-  0% { background-position: 0 0; }
-  100% { background-position: 0 1000px; }
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 1000px;
+  }
 }
 
 /* ===============================
