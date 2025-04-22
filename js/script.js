@@ -1,4 +1,4 @@
-// script.js - VATЯIS Vaporwave Tetris Game Logic
+// script.js - VATЯIS Vaporwave Tetris Game Logic with Sound Effects
 
 const canvas = document.getElementById('gameCanvas');
 const context = canvas.getContext('2d');
@@ -20,10 +20,11 @@ const COLORS = [
   '#f00'  // O
 ];
 
-const moveSound = document.getElementById('moveSound');
-const rotateSound = document.getElementById('rotateSound');
-const lockSound = document.getElementById('lockSound');
-const gameOverSound = document.getElementById('gameOverSound');
+// Load sounds
+const moveSound = new Audio('sounds/move.wav');
+const rotateSound = new Audio('sounds/rotate.wav');
+const lockSound = new Audio('sounds/lock.wav');
+const gameOverSound = new Audio('sounds/gameover.mp3');
 
 // Tetromino shapes
 const TETROMINOS = {
@@ -132,7 +133,7 @@ function playerDrop() {
 function playerMove(dir) {
   player.pos.x += dir;
   if (collide(arena, player)) player.pos.x -= dir;
-  moveSound.play();
+  else moveSound.play();
 }
 
 function playerRotate(dir) {
