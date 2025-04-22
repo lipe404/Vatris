@@ -5,6 +5,10 @@ const context = canvas.getContext('2d');
 canvas.width = 300;
 canvas.height = 600;
 let hue = 0;
+let gameStarted = false;
+let startScreenFrame = 0;
+let showPressEnter = true;
+let lastBlink = 0;
 
 //Variáveis para animação do pause
 let pauseAnimationAlpha = 0;
@@ -15,14 +19,14 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK_SIZE = 30;
 const COLORS = [
-  null,
-  '#f0f', // T
-  '#0ff', // I
-  '#0f0', // S
-  '#ff0', // Z
-  '#00f', // L
-  '#f60', // J
-  '#f00'  // O
+    null,
+    '#ff6ec7', // T - pink neon
+    '#00fff7', // I - ciano elétrico
+    '#7dffb3', // S - verde menta glitch
+    '#ffe600', // Z - amarelo neon vibrante
+    '#6a5acd', // L - roxo elétrico (blue violet)
+    '#ff8c00', // J - laranja neon queimado
+    '#ff0055'  // O - magenta quente/rosado glitch
 ];
 
 // Carregar sons
@@ -70,6 +74,62 @@ const TETROMINOS = {
     [0, 0, 0]
   ]
 };
+
+// Desenhar a tela de inicio
+function drawStartScreen() {
+    context.fillStyle = `hsl(${hue}, 100%, 10%)`;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    hue = (hue + 0.5) % 360;
+
+    const title = "VATЯIS";
+    const prompt = "Aperte 'Enter'";
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
+    gradient.addColorStop(0, '#ff00cc');
+    gradient.addColorStop(1, '#00ffff');
+
+    const dropY = Math.min(centerY - 50, -100 + startScreenFrame * 4); // "queda"
+    startScreenFrame += 1;
+
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.font = 'bold 48px "Courier New", monospace';
+
+    drawGlitchText(title, centerX, dropY, gradient);
+
+    // Efeito de piscar no "Aperte Enter"
+    const now = performance.now();
+    if (now - lastBlink > 500) {
+        showPressEnter = !showPressEnter;
+        lastBlink = now;
+    }
+
+    if (showPressEnter && startScreenFrame > 20) {
+        context.font = 'bold 24px "Courier New", monospace';
+        drawGlitchText(prompt, centerX, centerY + 20, gradient, 1);
+    }
+}
+
+// Efeito glitch: múltiplas camadas ligeiramente deslocadas
+function drawGlitchText(text, x, y, fillStyle, shadowBlur = 20) {
+    context.fillStyle = fillStyle;
+    context.shadowColor = '#ff00cc';
+    context.shadowBlur = shadowBlur;
+
+    // Camada principal
+    context.fillText(text, x, y);
+
+    // Camadas RGB deslocadas (efeito glitch leve)
+    context.shadowBlur = 0;
+    context.fillStyle = 'rgba(255, 0, 255, 0.4)'; // magenta
+    context.fillText(text, x + 2, y - 1);
+
+    context.fillStyle = 'rgba(0, 255, 255, 0.4)'; // ciano
+    context.fillText(text, x - 2, y + 1);
+}
 
 // Arena
 function createMatrix(w, h) {
@@ -215,12 +275,18 @@ function update(time = 0) {
     const deltaTime = time - lastTime;
     lastTime = time;
 
+    if (!gameStarted) {
+        drawStartScreen();
+        requestAnimationFrame(update);
+        return;
+    }
+
     if (!isPaused) {
-      dropCounter += deltaTime;
-      if (dropCounter > dropInterval) {
-        playerDrop();
-        dropCounter = 0;
-      }
+        dropCounter += deltaTime;
+        if (dropCounter > dropInterval) {
+            playerDrop();
+            dropCounter = 0;
+        }
     }
 
     draw();
@@ -302,12 +368,18 @@ const player = {
 
 // Adicionar eventos de teclado
 document.addEventListener('keydown', event => {
-  if (event.key === 'ArrowLeft') playerMove(-1);
-  else if (event.key === 'ArrowRight') playerMove(1);
-  else if (event.key === 'ArrowDown') playerDrop();
-  else if (event.key === 'ArrowUp') playerRotate(1);
-  else if (event.key === 'p' || event.key === 'P') isPaused = !isPaused; // Pausar o jogo
-  else if (event.key === 'r' || event.key === 'R') resetPlayer(); // Reiniciar o jogo
+    if (!gameStarted && event.key === 'Enter') {
+      gameStarted = true;
+      resetPlayer();
+      update(); // Inicia a animação do jogo
+    } else if (gameStarted) {
+      if (event.key === 'ArrowLeft') playerMove(-1);
+      else if (event.key === 'ArrowRight') playerMove(1);
+      else if (event.key === 'ArrowDown') playerDrop();
+      else if (event.key === 'ArrowUp') playerRotate(1);
+      else if (event.key === 'p' || event.key === 'P') isPaused = !isPaused;
+      else if (event.key === 'r' || event.key === 'R') resetPlayer();
+    }
 });
 
 // Sistema de Highscore com LocalStorage
