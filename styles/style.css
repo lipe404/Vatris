@@ -1,0 +1,70 @@
+/* style.css - VATЯIS Vaporwave Style */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  background: radial-gradient(circle at center, #ff00ff, #111);
+  overflow: hidden;
+  font-family: 'Press Start 2P', monospace;
+  color: #fff;
+}
+
+#gameCanvas {
+  display: block;
+  margin: 0 auto;
+  background: radial-gradient(circle at center, rgba(255, 0, 255, 0.1), rgba(0, 0, 0, 1));
+  box-shadow: 0 0 30px #f0f;
+  border: 1px solid #0ff;
+}
+
+#hud {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  text-shadow: 2px 2px #000;
+}
+
+#logo {
+  font-size: 24px;
+  color: #ff66cc;
+  text-shadow: 0 0 8px #ff00ff, 0 0 20px #ff00ff;
+  margin-bottom: 20px;
+}
+
+#score, #level, #lines {
+  margin: 10px 0;
+  font-size: 12px;
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff;
+}
+
+/* Pixel stars background effect */
+body::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url('images/stars-pixelated.png');
+  background-size: cover;
+  opacity: 0.2;
+  z-index: -1;
+  animation: moveStars 60s linear infinite;
+}
+
+@keyframes moveStars {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 1000px; }
+}
+
+/* HUD transition */
+#hud div {
+  transition: all 0.3s ease;
+}
+
+/* Neon glow on canvas focus */
+#gameCanvas:focus {
+  outline: none;
+  box-shadow: 0 0 20px #0ff, 0 0 40px #f0f, 0 0 60px #ff0;
+}
