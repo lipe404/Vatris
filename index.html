@@ -1,28 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VATЯIS</title>
-  <link rel="stylesheet" href="styles/style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-</head>
-<body>
-  <canvas id="gameCanvas"></canvas>
-  <div id="hud">
-    <div id="logo">VATЯIS</div>
-    <div id="score">SCORE: 000000</div>
-    <div id="level">LEVEL: 1</div>
-    <div id="lines">LINES: 0</div>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VATЯIS</title>
+    <link rel="stylesheet" href="styles/style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet">
+  </head>
+  <body>
+    <canvas id="gameCanvas"></canvas>
 
-  <audio id="moveSound" src="sounds/move.wav" preload="auto"></audio>
-  <audio id="rotateSound" src="sounds/rotate.wav" preload="auto"></audio>
-  <audio id="lockSound" src="sounds/lock.wav" preload="auto"></audio>
-  <audio id="gameOverSound" src="sounds/gameover.mp3" preload="auto"></audio>
+    <!-- HUD Principal (esquerda) -->
+    <div id="hud">
+      <div id="logo">VATЯIS</div>
+      <div id="score">SCORE: 000000</div>
+      <div id="level">LEVEL: 1</div>
+      <div id="lines">LINES: 0</div>
+    </div>
 
-  <footer id="footer">Desenvolvido por <a href="https://github.com/lipe404"> Felipe Toledo</a></footer>
+    <!-- HUD da Próxima Peça (direita) -->
+    <div id="nextPieceHud">
+      <div id="nextPieceTitle">NEXT</div>
+      <canvas id="nextPieceCanvas"></canvas>
+    </div>
 
-  <script src="js/script.js"></script>
-</body>
+    <audio id="moveSound" src="sounds/move.wav" preload="auto"></audio>
+    <audio id="rotateSound" src="sounds/rotate.wav" preload="auto"></audio>
+    <audio id="lockSound" src="sounds/lock.wav" preload="auto"></audio>
+    <audio id="gameOverSound" src="sounds/gameover.mp3" preload="auto"></audio>
+
+    <footer id="footer">Desenvolvido por <a href="https://github.com/lipe404">
+        Felipe Toledo</a></footer>
+
+    <script src="js/script.js"></script>
+  </body>
 </html>

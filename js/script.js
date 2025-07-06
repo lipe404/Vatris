@@ -4,6 +4,13 @@ const canvas = document.getElementById("gameCanvas");
 const context = canvas.getContext("2d");
 canvas.width = 300;
 canvas.height = 600;
+
+// Canvas da próxima peça
+const nextCanvas = document.getElementById("nextPieceCanvas");
+const nextContext = nextCanvas.getContext("2d");
+nextCanvas.width = 120;
+nextCanvas.height = 120;
+
 let hue = 0;
 let gameStarted = false;
 let startScreenFrame = 0;
@@ -16,15 +23,20 @@ let pauseDirection = 1;
 
 // Variável de nível e linhas
 let level = 1;
-let lines = 0; // Adicionar contador de linhas
+let lines = 0;
 const levelElement = document.getElementById("level");
 const linesElement = document.getElementById("lines");
+
+// Sistema de próxima peça
+let nextPiece = null;
+let pieceQueue = [];
 
 // Constantes
 const particles = [];
 const COLS = 10;
 const ROWS = 20;
 const BLOCK_SIZE = 30;
+const NEXT_BLOCK_SIZE = 20; // Tamanho menor para a próxima peça
 const COLORS = [
   null,
   "#ff6ec7", // T - pink neon
@@ -88,6 +100,84 @@ const TETROMINOS = {
     [0, 0, 0],
   ],
 };
+
+// Array com todas as peças para randomização
+const PIECE_TYPES = ["I", "J", "L", "O", "S", "T", "Z"];
+
+// Função para gerar uma sequência aleatória de peças (bag system)
+function generatePieceBag() {
+  const bag = [...PIECE_TYPES];
+  // Embaralhar usando Fisher-Yates
+  for (let i = bag.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+  return bag;
+}
+
+// Função para obter a próxima peça
+function getNextPiece() {
+  if (pieceQueue.length === 0) {
+    pieceQueue = generatePieceBag();
+  }
+  return pieceQueue.shift();
+}
+
+// Função para desenhar a próxima peça
+function drawNextPiece() {
+  if (!nextPiece || !gameStarted) return;
+
+  // Limpar o canvas
+  nextContext.fillStyle = "rgba(0, 0, 0, 0.8)";
+  nextContext.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+
+  const matrix = createPiece(nextPiece);
+
+  // Calcular posição centralizada
+  const offsetX = Math.floor(
+    (nextCanvas.width / NEXT_BLOCK_SIZE - matrix[0].length) / 2
+  );
+  const offsetY = Math.floor(
+    (nextCanvas.height / NEXT_BLOCK_SIZE - matrix.length) / 2
+  );
+
+  // Desenhar a peça
+  matrix.forEach((row, y) => {
+    row.forEach((value, x) => {
+      if (value !== 0) {
+        // Desenhar o bloco com efeito neon
+        nextContext.fillStyle = COLORS[value];
+        nextContext.fillRect(
+          (x + offsetX) * NEXT_BLOCK_SIZE,
+          (y + offsetY) * NEXT_BLOCK_SIZE,
+          NEXT_BLOCK_SIZE,
+          NEXT_BLOCK_SIZE
+        );
+
+        // Borda dos blocos
+        nextContext.strokeStyle = "#222";
+        nextContext.lineWidth = 1;
+        nextContext.strokeRect(
+          (x + offsetX) * NEXT_BLOCK_SIZE,
+          (y + offsetY) * NEXT_BLOCK_SIZE,
+          NEXT_BLOCK_SIZE,
+          NEXT_BLOCK_SIZE
+        );
+
+        // Efeito de brilho
+        nextContext.shadowColor = COLORS[value];
+        nextContext.shadowBlur = 5;
+        nextContext.fillRect(
+          (x + offsetX) * NEXT_BLOCK_SIZE,
+          (y + offsetY) * NEXT_BLOCK_SIZE,
+          NEXT_BLOCK_SIZE,
+          NEXT_BLOCK_SIZE
+        );
+        nextContext.shadowBlur = 0;
+      }
+    });
+  });
+}
 
 // Desenhar a tela de inicio
 function drawStartScreen() {
@@ -346,6 +436,9 @@ function draw() {
   drawMatrix(arena, { x: 0, y: 0 });
   drawMatrix(player.matrix, player.pos);
 
+  // Desenhar a próxima peça
+  drawNextPiece();
+
   if (isPaused) {
     drawPauseScreen();
   }
@@ -468,14 +561,22 @@ function createPiece(type) {
   return TETROMINOS[type];
 }
 
-// Resetar o jogador
+// Resetar o jogador - MODIFICADO
 function resetPlayer() {
-  const pieces = "TJLOSZI";
-  player.matrix = createPiece(
-    pieces[Math.floor(Math.random() * pieces.length)]
-  );
+  // Se não há próxima peça, gerar uma
+  if (!nextPiece) {
+    nextPiece = getNextPiece();
+  }
+
+  // A peça atual se torna a próxima peça
+  player.matrix = createPiece(nextPiece);
+
+  // Gerar nova próxima peça
+  nextPiece = getNextPiece();
+
   player.pos.y = 0;
   player.pos.x = Math.floor(COLS / 2) - Math.floor(player.matrix[0].length / 2);
+
   if (collide(arena, player)) {
     gameOver();
   }
@@ -549,6 +650,11 @@ function startGame() {
   level = 1;
   lines = 0;
   dropInterval = 1000;
+
+  // Resetar sistema de peças
+  pieceQueue = [];
+  nextPiece = null;
+
   arena.forEach((row) => row.fill(0));
   resetPlayer();
   updateLevel();
@@ -565,6 +671,9 @@ function gameOver() {
   drawGameOverScreen();
   gameStarted = false;
   isPaused = false;
+
+  // Limpar o canvas da próxima peça
+  nextContext.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
 }
 
 function saveHighScore() {
