@@ -1,7 +1,7 @@
 // script.js - VATЯIS Vaporwave Tetris Game Logic with Sound Effects
 
-const canvas = document.getElementById('gameCanvas');
-const context = canvas.getContext('2d');
+const canvas = document.getElementById("gameCanvas");
+const context = canvas.getContext("2d");
 canvas.width = 300;
 canvas.height = 600;
 let hue = 0;
@@ -14,9 +14,11 @@ let lastBlink = 0;
 let pauseAnimationAlpha = 0;
 let pauseDirection = 1;
 
-// Variável de nível
+// Variável de nível e linhas
 let level = 1;
-const levelElement = document.getElementById('level');
+let lines = 0; // Adicionar contador de linhas
+const levelElement = document.getElementById("level");
+const linesElement = document.getElementById("lines");
 
 // Constantes
 const particles = [];
@@ -24,132 +26,131 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK_SIZE = 30;
 const COLORS = [
-    null,
-    '#ff6ec7', // T - pink neon
-    '#00fff7', // I - ciano elétrico
-    '#7dffb3', // S - verde menta glitch
-    '#ffe600', // Z - amarelo neon vibrante
-    '#6a5acd', // L - roxo elétrico (blue violet)
-    '#ff8c00', // J - laranja neon queimado
-    '#ff0055'  // O - magenta quente/rosado glitch
+  null,
+  "#ff6ec7", // T - pink neon
+  "#00fff7", // I - ciano elétrico
+  "#7dffb3", // S - verde menta glitch
+  "#ffe600", // Z - amarelo neon vibrante
+  "#6a5acd", // L - roxo elétrico (blue violet)
+  "#ff8c00", // J - laranja neon queimado
+  "#ff0055", // O - magenta quente/rosado glitch
 ];
 
 // Carregar sons
-const moveSound = new Audio('sounds/move.wav');
-const rotateSound = new Audio('sounds/rotate.wav');
-const lockSound = new Audio('sounds/lock.wav');
-const gameOverSound = new Audio('sounds/gameover.mp3');
-const lineClearSound = new Audio('sounds/lineClear.wav');
+const moveSound = new Audio("sounds/move.wav");
+const rotateSound = new Audio("sounds/rotate.wav");
+const lockSound = new Audio("sounds/lock.wav");
+const gameOverSound = new Audio("sounds/gameover.mp3");
+const lineClearSound = new Audio("sounds/lineClear.wav");
 
 // Carregar imagens
 const introImage = new Image();
-introImage.src = 'imgs/intro.jpg';
+introImage.src = "imgs/intro.jpg";
 
 const gameImage = new Image();
-gameImage.src = 'imgs/fundo.jpg';
+gameImage.src = "imgs/fundo.jpg";
 
 // Tetrominos
 const TETROMINOS = {
-  'I': [
+  I: [
     [0, 0, 0, 0],
     [1, 1, 1, 1],
     [0, 0, 0, 0],
-    [0, 0, 0, 0]
+    [0, 0, 0, 0],
   ],
-  'J': [
+  J: [
     [2, 0, 0],
     [2, 2, 2],
-    [0, 0, 0]
+    [0, 0, 0],
   ],
-  'L': [
+  L: [
     [0, 0, 3],
     [3, 3, 3],
-    [0, 0, 0]
+    [0, 0, 0],
   ],
-  'O': [
+  O: [
     [4, 4],
-    [4, 4]
+    [4, 4],
   ],
-  'S': [
+  S: [
     [0, 5, 5],
     [5, 5, 0],
-    [0, 0, 0]
+    [0, 0, 0],
   ],
-  'T': [
+  T: [
     [0, 6, 0],
     [6, 6, 6],
-    [0, 0, 0]
+    [0, 0, 0],
   ],
-  'Z': [
+  Z: [
     [7, 7, 0],
     [0, 7, 7],
-    [0, 0, 0]
-  ]
+    [0, 0, 0],
+  ],
 };
 
 // Desenhar a tela de inicio
 function drawStartScreen() {
-    if (introImage.complete) {
-        context.drawImage(introImage, 0, 0, canvas.width, canvas.height);
-    } else {
-        introImage.onload = () => {
-            context.drawImage(introImage, 0, 0, canvas.width, canvas.height);
-        };
-    }
+  if (introImage.complete) {
+    context.drawImage(introImage, 0, 0, canvas.width, canvas.height);
+  } else {
+    introImage.onload = () => {
+      context.drawImage(introImage, 0, 0, canvas.width, canvas.height);
+    };
+  }
 
-    const title = "VATЯIS";
-    const prompt = "Aperte 'Enter'";
+  const title = "VATЯIS";
+  const prompt = "Aperte 'Enter'";
 
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
 
-    const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
-    gradient.addColorStop(0, '#ff00cc');
-    gradient.addColorStop(1, '#00ffff');
+  const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
+  gradient.addColorStop(0, "#ff00cc");
+  gradient.addColorStop(1, "#00ffff");
 
-    const dropY = Math.min(centerY - 50, -100 + startScreenFrame * 4);
-    startScreenFrame += 1;
+  const dropY = Math.min(centerY - 50, -100 + startScreenFrame * 4);
+  startScreenFrame += 1;
 
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.font = 'bold 50px "Courier New", monospace';
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.font = 'bold 50px "Courier New", monospace';
 
-    drawGlitchText(title, centerX, dropY, gradient);
+  drawGlitchText(title, centerX, dropY, gradient);
 
-    const now = performance.now();
-    if (now - lastBlink > 500) {
-        showPressEnter = !showPressEnter;
-        lastBlink = now;
-    }
+  const now = performance.now();
+  if (now - lastBlink > 500) {
+    showPressEnter = !showPressEnter;
+    lastBlink = now;
+  }
 
-    if (showPressEnter && startScreenFrame > 20) {
-        context.font = 'bold 24px "Courier New", monospace';
-        drawGlitchText(prompt, centerX, centerY + 20, gradient, 1);
-    }
+  if (showPressEnter && startScreenFrame > 20) {
+    context.font = 'bold 24px "Courier New", monospace';
+    drawGlitchText(prompt, centerX, centerY + 20, gradient, 1);
+  }
 }
 
 function drawGlitchText(text, x, y, fillStyle, shadowBlur = 20) {
-    context.fillStyle = fillStyle;
-    context.shadowColor = '#ff00cc';
-    context.shadowBlur = shadowBlur;
-    context.fillText(text, x, y);
+  context.fillStyle = fillStyle;
+  context.shadowColor = "#ff00cc";
+  context.shadowBlur = shadowBlur;
+  context.fillText(text, x, y);
 
-    context.shadowBlur = 0;
-    context.fillStyle = 'rgba(255, 0, 255, 0.4)';
-    context.fillText(text, x + 2, y - 1);
+  context.shadowBlur = 0;
+  context.fillStyle = "rgba(255, 0, 255, 0.4)";
+  context.fillText(text, x + 2, y - 1);
 
-    context.fillStyle = 'rgba(0, 255, 255, 0.4)';
-    context.fillText(text, x - 2, y + 1);
+  context.fillStyle = "rgba(0, 255, 255, 0.4)";
+  context.fillText(text, x - 2, y + 1);
 }
 
-// Partículas de distorção
 // Partículas de distorção mais estilizadas
 function createGlitchParticles(x, y) {
-  const numParticles = 30;  // Aumentar o número de partículas para mais intensidade visual
+  const numParticles = 30;
   for (let i = 0; i < numParticles; i++) {
-    const angle = Math.random() * Math.PI * 2; // Adicionando uma direção aleatória para cada partícula
-    const speed = Math.random() * 2 + 1; // Variedade de velocidades para dar mais imprevisibilidade
-    const size = Math.random() * 3 + 2; // Variar o tamanho para dar mais dinamicidade
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 2 + 1;
+    const size = Math.random() * 3 + 2;
 
     particles.push({
       x: x * BLOCK_SIZE + Math.cos(angle) * Math.random() * BLOCK_SIZE,
@@ -157,10 +158,10 @@ function createGlitchParticles(x, y) {
       size: size,
       speedX: Math.cos(angle) * speed,
       speedY: Math.sin(angle) * speed,
-      life: Math.random() * 40 + 20, // Tempo de vida mais variado
-      color: `hsl(${Math.random() * 360}, 100%, ${Math.random() * 50 + 30}%)`, // Cores mais suaves para um efeito mais estético
+      life: Math.random() * 40 + 20,
+      color: `hsl(${Math.random() * 360}, 100%, ${Math.random() * 50 + 30}%)`,
       alpha: 1,
-      glow: Math.random() * 2 + 0.5  // Adicionando um efeito de brilho
+      glow: Math.random() * 2 + 0.5,
     });
   }
 }
@@ -171,35 +172,33 @@ function updateParticles() {
     const particle = particles[i];
     particle.x += particle.speedX;
     particle.y += particle.speedY;
-    particle.size *= 0.97;  // Diminuição mais suave para um efeito gradual de encolhimento
-    particle.alpha -= 0.03;  // Efeito de desvanecimento mais suave
-    particle.glow -= 0.05; // O brilho das partículas vai diminuindo com o tempo
+    particle.size *= 0.97;
+    particle.alpha -= 0.03;
+    particle.glow -= 0.05;
 
     if (particle.alpha <= 0 || particle.size <= 0 || particle.glow <= 0) {
-      particles.splice(i, 1);  // Remove as partículas que morreram
+      particles.splice(i, 1);
     }
   }
 }
 
 // Desenhar as partículas com um efeito de brilho dinâmico
 function drawParticles() {
-  particles.forEach(particle => {
+  particles.forEach((particle) => {
     context.beginPath();
     context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
 
-    // Efeito de brilho nas partículas
-    context.shadowBlur = 15; // Brilho suave
-    context.shadowColor = particle.color; // Cor do brilho da partícula
+    context.shadowBlur = 15;
+    context.shadowColor = particle.color;
     context.fillStyle = particle.color;
 
-    // Desenha a partícula com transparência variável
     context.globalAlpha = particle.alpha;
 
     context.fill();
   });
-  context.globalAlpha = 1; // Resetando o alpha após desenhar as partículas
-  context.shadowBlur = 0; // Resetando o brilho
-  context.shadowColor = 'transparent'; // Resetando a cor do brilho
+  context.globalAlpha = 1;
+  context.shadowBlur = 0;
+  context.shadowColor = "transparent";
 }
 
 // Arena
@@ -215,9 +214,19 @@ function drawMatrix(matrix, offset) {
     row.forEach((value, x) => {
       if (value !== 0) {
         context.fillStyle = COLORS[value];
-        context.fillRect((x + offset.x) * BLOCK_SIZE, (y + offset.y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-        context.strokeStyle = '#222';
-        context.strokeRect((x + offset.x) * BLOCK_SIZE, (y + offset.y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        context.fillRect(
+          (x + offset.x) * BLOCK_SIZE,
+          (y + offset.y) * BLOCK_SIZE,
+          BLOCK_SIZE,
+          BLOCK_SIZE
+        );
+        context.strokeStyle = "#222";
+        context.strokeRect(
+          (x + offset.x) * BLOCK_SIZE,
+          (y + offset.y) * BLOCK_SIZE,
+          BLOCK_SIZE,
+          BLOCK_SIZE
+        );
       }
     });
   });
@@ -253,7 +262,7 @@ function rotate(matrix, dir) {
     }
   }
   if (dir > 0) {
-    matrix.forEach(row => row.reverse());
+    matrix.forEach((row) => row.reverse());
   } else {
     matrix.reverse();
   }
@@ -295,61 +304,77 @@ function playerRotate(dir) {
   rotateSound.play();
 }
 
-// Limpar linhas completas
+// Limpar linhas completas - CORRIGIDO
 function arenaSweep() {
-  let rowCount = 1;
+  let linesCleared = 0;
+
   outer: for (let y = arena.length - 1; y >= 0; y--) {
     for (let x = 0; x < arena[y].length; x++) {
       if (arena[y][x] === 0) continue outer;
     }
 
     // Gerar partículas de glitch na linha que foi apagada
-    createGlitchParticles(0, y);
+    createGlitchParticles(5, y);
 
-    setTimeout(() => {
-        const row = arena.splice(y, 1)[0].fill(0);
-        arena.unshift(row);
-        lineClearSound.play();
-    }, 100);
+    // Remover a linha completa
+    const row = arena.splice(y, 1)[0].fill(0);
+    arena.unshift(row);
 
-    player.score += rowCount * 100;
-    rowCount *= 2;
+    linesCleared++;
+    y++; // Verificar a mesma linha novamente
+  }
+
+  if (linesCleared > 0) {
+    lines += linesCleared;
+    player.score += linesCleared * 100 * level;
+    lineClearSound.play();
+    updateLines();
   }
 }
 
 // Desenhar a tela
 function draw() {
-    if (gameImage.complete) {
-        context.drawImage(gameImage, 0, 0, canvas.width, canvas.height);
-    } else {
-        gameImage.onload = () => {
-            context.drawImage(gameImage, 0, 0, canvas.width, canvas.height);
-        };
-    }
-    hue = (hue + 0.5) % 360;
+  if (gameImage.complete) {
+    context.drawImage(gameImage, 0, 0, canvas.width, canvas.height);
+  } else {
+    gameImage.onload = () => {
+      context.drawImage(gameImage, 0, 0, canvas.width, canvas.height);
+    };
+  }
+  hue = (hue + 0.5) % 360;
 
-    drawMatrix(arena, { x: 0, y: 0 });
-    drawMatrix(player.matrix, player.pos);
+  drawMatrix(arena, { x: 0, y: 0 });
+  drawMatrix(player.matrix, player.pos);
 
-    if (isPaused) {
-        drawPauseScreen();
-    }
+  if (isPaused) {
+    drawPauseScreen();
+  }
 }
 
-// Atualizar a pontuação e o nível
+// Atualizar a pontuação e o nível - CORRIGIDO
 function updateScore() {
-    document.getElementById('score').innerText = `SCORE: ${String(player.score).padStart(6, '0')}`;
+  document.getElementById("score").innerText = `SCORE: ${String(
+    player.score
+  ).padStart(6, "0")}`;
 
-    if (player.score >= level * 1000) {
-      level++;
-      dropInterval = Math.max(100, dropInterval - 100);
-      updateLevel();
-    }
+  // Aumentar nível a cada 10 linhas
+  const newLevel = Math.floor(lines / 10) + 1;
+  if (newLevel > level) {
+    level = newLevel;
+    // Aumentar velocidade: diminuir o intervalo de queda
+    dropInterval = Math.max(50, 1000 - (level - 1) * 100);
+    updateLevel();
+  }
 }
 
 // Função para atualizar o nível na interface HTML
 function updateLevel() {
-    levelElement.innerText = `LEVEL: ${level}`;
+  levelElement.innerText = `LEVEL: ${level}`;
+}
+
+// Função para atualizar as linhas na interface HTML - NOVA
+function updateLines() {
+  linesElement.innerText = `LINES: ${lines}`;
 }
 
 // Atualizar a tela
@@ -358,23 +383,21 @@ let dropInterval = 1000;
 let lastTime = 0;
 let isPaused = false;
 
-// Função de atualização
+// Função de atualização - CORRIGIDA
 function update(time = 0) {
-    const deltaTime = time - lastTime;
-    lastTime = time;
+  const deltaTime = time - lastTime;
+  lastTime = time;
 
-    if (!gameStarted) {
-        drawStartScreen();
-        requestAnimationFrame(update);
-        return;
-    }
+  if (!gameStarted) {
+    drawStartScreen();
+    requestAnimationFrame(update);
+    return;
+  }
 
-    if (!isPaused) {
-        dropCounter += deltaTime;
-        if (dropCounter > dropInterval) {
-            playerDrop();
-            dropCounter = 0;
-        }
+  if (!isPaused) {
+    dropCounter += deltaTime;
+    if (dropCounter > dropInterval) {
+      playerDrop();
     }
 
     draw();
@@ -382,50 +405,62 @@ function update(time = 0) {
     drawParticles();
     updateScore();
 
-    if (player.score < 0 || collide(arena, player)) {
-        gameOver();
-    } else {
-        requestAnimationFrame(update);
+    // Verificar game over
+    if (collide(arena, player)) {
+      gameOver();
+      return;
     }
+  } else {
+    // Mesmo pausado, ainda desenha a tela
+    draw();
+    updateParticles();
+    drawParticles();
+  }
+
+  requestAnimationFrame(update);
 }
 
 // Função para desenhar a tela de pause
 function drawPauseScreen() {
-    context.fillStyle = 'rgba(0, 0, 0, 0.6)';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "rgba(0, 0, 0, 0.6)";
+  context.fillRect(0, 0, canvas.width, canvas.height);
 
-    const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
-    gradient.addColorStop(0, '#ff00cc');
-    gradient.addColorStop(1, '#3333ff');
+  const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
+  gradient.addColorStop(0, "#ff00cc");
+  gradient.addColorStop(1, "#3333ff");
 
-    context.strokeStyle = '#ff00cc';
-    context.lineWidth = 2;
-    context.beginPath();
-    context.moveTo(40, canvas.height / 2 - 70);
-    context.lineTo(canvas.width - 40, canvas.height / 2 - 70);
-    context.stroke();
+  context.strokeStyle = "#ff00cc";
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(40, canvas.height / 2 - 70);
+  context.lineTo(canvas.width - 40, canvas.height / 2 - 70);
+  context.stroke();
 
-    context.strokeStyle = '#3333ff';
-    context.beginPath();
-    context.moveTo(40, canvas.height / 2 + 70);
-    context.lineTo(canvas.width - 40, canvas.height / 2 + 70);
-    context.stroke();
+  context.strokeStyle = "#3333ff";
+  context.beginPath();
+  context.moveTo(40, canvas.height / 2 + 70);
+  context.lineTo(canvas.width - 40, canvas.height / 2 + 70);
+  context.stroke();
 
-    context.fillStyle = gradient;
-    context.font = 'bold 48px "Courier New", monospace';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.shadowColor = '#ff00cc';
-    context.shadowBlur = 15;
+  context.fillStyle = gradient;
+  context.font = 'bold 48px "Courier New", monospace';
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.shadowColor = "#ff00cc";
+  context.shadowBlur = 15;
 
-    context.fillText('⏸ PAUSADO', canvas.width / 2, canvas.height / 2);
+  context.fillText("⏸ PAUSADO", canvas.width / 2, canvas.height / 2);
 
-    context.shadowColor = '#00ffff';
-    context.shadowBlur = 10;
-    context.font = '16px monospace';
-    context.fillText('Pressione P para continuar', canvas.width / 2, canvas.height / 2 + 50);
+  context.shadowColor = "#00ffff";
+  context.shadowBlur = 10;
+  context.font = "16px monospace";
+  context.fillText(
+    "Pressione P para continuar",
+    canvas.width / 2,
+    canvas.height / 2 + 50
+  );
 
-    context.shadowBlur = 0;
+  context.shadowBlur = 0;
 }
 
 // Criar a matriz do tetromino
@@ -435,14 +470,14 @@ function createPiece(type) {
 
 // Resetar o jogador
 function resetPlayer() {
-  const pieces = 'TJLOSZI';
-  player.matrix = createPiece(pieces[Math.floor(Math.random() * pieces.length)]);
+  const pieces = "TJLOSZI";
+  player.matrix = createPiece(
+    pieces[Math.floor(Math.random() * pieces.length)]
+  );
   player.pos.y = 0;
   player.pos.x = Math.floor(COLS / 2) - Math.floor(player.matrix[0].length / 2);
   if (collide(arena, player)) {
-    gameOverSound.play();
-    saveHighScore();
-    gameStarted = false;
+    gameOver();
   }
 }
 
@@ -451,119 +486,129 @@ let arena = createMatrix(COLS, ROWS);
 let player = {
   pos: { x: 0, y: 0 },
   matrix: null,
-  score: 0
+  score: 0,
 };
 
-//Função para desenhar a tela de Game Over
+// Função para desenhar a tela de Game Over
 function drawGameOverScreen() {
-    context.fillStyle = 'rgba(0, 0, 0, 0.6)';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "rgba(0, 0, 0, 0.8)";
+  context.fillRect(0, 0, canvas.width, canvas.height);
 
-    const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
-    gradient.addColorStop(0, '#ff00cc');
-    gradient.addColorStop(1, '#3333ff');
+  const gradient = context.createLinearGradient(0, 0, canvas.width, 0);
+  gradient.addColorStop(0, "#ff00cc");
+  gradient.addColorStop(1, "#3333ff");
 
-    context.strokeStyle = '#ff00cc';
-    context.lineWidth = 2;
-    context.beginPath();
-    context.moveTo(40, canvas.height / 2 - 70);
-    context.lineTo(canvas.width - 40, canvas.height / 2 - 70);
-    context.stroke();
+  context.strokeStyle = "#ff00cc";
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(40, canvas.height / 2 - 70);
+  context.lineTo(canvas.width - 40, canvas.height / 2 - 70);
+  context.stroke();
 
-    context.strokeStyle = '#3333ff';
-    context.beginPath();
-    context.moveTo(40, canvas.height / 2 + 70);
-    context.lineTo(canvas.width - 40, canvas.height / 2 + 70);
-    context.stroke();
+  context.strokeStyle = "#3333ff";
+  context.beginPath();
+  context.moveTo(40, canvas.height / 2 + 70);
+  context.lineTo(canvas.width - 40, canvas.height / 2 + 70);
+  context.stroke();
 
-    context.fillStyle = gradient;
-    context.font = 'bold 48px "Courier New", monospace';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.shadowColor = '#ff00cc';
-    context.shadowBlur = 15;
+  context.fillStyle = gradient;
+  context.font = 'bold 32px "Courier New", monospace';
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.shadowColor = "#ff00cc";
+  context.shadowBlur = 15;
 
-    context.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 40);
+  context.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 40);
 
-    const currentScoreText = `Sua Pontuação: ${player.score}`;
-    const highScoreText = `Pontuação Mais Alta: ${highScore}`;
+  const currentScoreText = `Score: ${player.score}`;
+  const linesText = `Lines: ${lines}`;
+  const levelText = `Level: ${level}`;
+  const highScoreText = `High Score: ${highScore}`;
 
-    context.shadowColor = '#00ffff';
-    context.shadowBlur = 10;
-    context.font = 'bold 24px "Courier New", monospace';
-    context.fillText(currentScoreText, canvas.width / 2, canvas.height / 2 + 30);
-    context.fillText(highScoreText, canvas.width / 2, canvas.height / 2 + 70);
+  context.shadowColor = "#00ffff";
+  context.shadowBlur = 10;
+  context.font = 'bold 16px "Courier New", monospace';
+  context.fillText(currentScoreText, canvas.width / 2, canvas.height / 2 + 10);
+  context.fillText(linesText, canvas.width / 2, canvas.height / 2 + 30);
+  context.fillText(levelText, canvas.width / 2, canvas.height / 2 + 50);
+  context.fillText(highScoreText, canvas.width / 2, canvas.height / 2 + 70);
 
-    context.shadowBlur = 0;
-    context.fillStyle = '#ffffff';
-    context.font = '16px "Courier New", monospace';
-    context.fillText("Aperte 'Enter' para reiniciar", canvas.width / 2, canvas.height / 2 + 120);
+  context.shadowBlur = 0;
+  context.fillStyle = "#ffffff";
+  context.font = '12px "Courier New", monospace';
+  context.fillText(
+    "Aperte 'Enter' para reiniciar",
+    canvas.width / 2,
+    canvas.height / 2 + 100
+  );
 }
 
 function startGame() {
-    gameStarted = true;
-    player.score = 0;
-    arena.forEach(row => row.fill(0));
-    resetPlayer();
-    update();
+  gameStarted = true;
+  player.score = 0;
+  level = 1;
+  lines = 0;
+  dropInterval = 1000;
+  arena.forEach((row) => row.fill(0));
+  resetPlayer();
+  updateLevel();
+  updateLines();
 }
 
 function restartGame() {
-    player.score = 0;
-    arena.forEach(row => row.fill(0));
-    resetPlayer();
-    update();
+  startGame();
 }
 
 function gameOver() {
-    gameOverSound.play();
-    saveHighScore();
-    drawGameOverScreen();
-    gameStarted = false;
+  gameOverSound.play();
+  saveHighScore();
+  drawGameOverScreen();
+  gameStarted = false;
+  isPaused = false;
 }
 
 function saveHighScore() {
-    const currentScore = player.score;
-    let highScore = localStorage.getItem('highScore') || 0;
-
-    if (currentScore > highScore) {
-        highScore = currentScore;
-        localStorage.setItem('highScore', highScore);
-    }
-}
-
-// Sistema de Highscore com LocalStorage
-let highScore = localStorage.getItem('vatrisHighScore') || 0;
-if (player.score > highScore) {
-  localStorage.setItem('vatrisHighScore', player.score);
-}
-
-// Adicionar evento de teclado para alternar pausa
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'p' || event.key === 'P') {
-      isPaused = !isPaused;
-      if (!isPaused) {
-          // Se o jogo foi despausado, continue com o fluxo normal
-          lastTime = performance.now();
-          requestAnimationFrame(update);
-      }
+  const currentScore = player.score;
+  if (currentScore > highScore) {
+    highScore = currentScore;
+    localStorage.setItem("vatrisHighScore", highScore);
   }
-});
+}
 
-// Adicionar eventos de teclado
-document.addEventListener('keydown', event => {
-    if (!gameStarted && event.key === 'Enter') {
-        startGame();
+// Sistema de Highscore com LocalStorage - CORRIGIDO
+let highScore = localStorage.getItem("vatrisHighScore") || 0;
+
+// Eventos de teclado - CORRIGIDOS
+document.addEventListener("keydown", (event) => {
+  // Pausar/Despausar
+  if ((event.key === "p" || event.key === "P") && gameStarted) {
+    isPaused = !isPaused;
+    return;
+  }
+
+  // Tela inicial
+  if (!gameStarted && event.key === "Enter") {
+    startGame();
+    return;
+  }
+
+  // Controles do jogo (apenas quando não pausado)
+  if (gameStarted && !isPaused) {
+    switch (event.key) {
+      case "ArrowLeft":
+        playerMove(-1);
+        break;
+      case "ArrowRight":
+        playerMove(1);
+        break;
+      case "ArrowDown":
+        playerDrop();
+        break;
+      case "ArrowUp":
+        playerRotate(1);
+        break;
     }
-    else if (gameStarted && !isPaused) {
-        if (event.key === 'ArrowLeft') playerMove(-1);
-        else if (event.key === 'ArrowRight') playerMove(1);
-        else if (event.key === 'ArrowDown') playerDrop();
-        else if (event.key === 'ArrowUp') playerRotate(1);
-    }
-    else if (!gameStarted && event.key === 'Enter') {
-        restartGame();
-    }
+  }
 });
 
 // Iniciar o jogo
